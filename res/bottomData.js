@@ -1,0 +1,38 @@
+const bottomData = [
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food1.jpeg'),
+        countryName:'French'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food2.jpeg'),
+        countryName:'italian'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food3.jpeg'),
+        countryName:'Meccician'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food4.jpeg'),
+        countryName:'British'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food5.jpeg'),
+        countryName:'Cameroonian'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food6.jpeg'),
+        countryName:'Cameroonian'
+    },
+    {
+        id:Math.random().toString(),
+        source:require('../res/bottomListimages/food7.jpeg'),
+        countryName:'French'
+    },
+]
+export default bottomData
