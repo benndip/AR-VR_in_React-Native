@@ -1,6 +1,7 @@
 'use strict';
 
 import React, { Component } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 import {
   ViroARSceneNavigator,
@@ -11,54 +12,117 @@ import {
   ViroMaterials,
   ViroAnimations,
   ViroAmbientLight,
-  ViroDirectionalLight,
-  ViroSphere
+  ViroPortalScene,
+  ViroPortal,
+  Viro3DObject,
+  Viro360Video,
+  Viro360Image
 } from 'react-viro'
 
-import { StyleSheet, View, Text } from 'react-native';
 
 
 class Webscreen extends Component {
 
   state = {
-    tracking: false,
-    x: 0,
-    y: 0,
-    z: -1,
+    dollarBills: [],
+    interval: null,
+    score: 0,
+    tracking: false
   };
+
+  componentWillUnmount() {
+    clearInterval(this.state.interval);
+  }
 
   onInitialized = (state, reason) => {
     if (state === ViroConstants.TRACKING_NORMAL) {
       this.setState({ tracking: true });
+      // this.startGame()
     }
   };
 
 
+  addRandomBill = () => {
+    this.setState(({ dollarBills }) => ({
+      dollarBills: [
+        ...dollarBills,
+        {
+          position: [
+            this.randomDecimalNumber(-2, 2),
+            this.randomDecimalNumber(-2, 2),
+            this.randomDecimalNumber(-2, 2)
+          ],
+          rotation: [
+            this.randomDecimalNumber(-45, 45),
+            this.randomDecimalNumber(-45, 45),
+            this.randomDecimalNumber(-45, 45)
+          ]
+        }
+      ]
+    }));
+  }
+
+  startGame = () => {
+    let interval = setInterval(this.addRandomBill, 1000);
+    this.setState({ interval });
+  };
+
+  randomDecimalNumber = (min, max) =>
+    Math.random() * (Math.random() < 0.5 ? min : max);
+
+  bumpScore = () => {
+    this.setState(({ score }) => {
+      return { score: score + 1 };
+    });
+  };
+
+  onDollarSelect = index => {
+    this.setState(({ dollarBills }) => {
+      const newDollarBills = [...dollarBills];
+      newDollarBills.splice(index, 1);
+      this.bumpScore();
+      return { dollarBills: newDollarBills };
+    });
+  };
 
   renderARScene = () => {
-    const { x, y, z } = this.state
+    const { dollarBills, tracking } = this.state;
     return (
       <ViroARScene onTrackingUpdated={this.onInitialized}>
-        <ViroAmbientLight color="#FFFFFF" intensity={150} />
-        <ViroDirectionalLight
-          color='#FFFFFF'
-          direction={[1, -1, 1]}
-          castsShadow={true}
-        />
-        {this.state.tracking &&
-          <ViroSphere
-            radius={0.2}
-            onDrag={(position) => {
-              this.setState({
-                x: position[0],
-                y: position[1],
-                z: position[2]
-              })
-            }}
-            position={[x, y, z]}
-            materials={["moon"]}
-            animation={{ name: 'spin', run: true, loop: true }}
-          />
+        <ViroAmbientLight color="#ffffff" />
+        {tracking &&
+          <ViroPortalScene
+            passable={true}
+            onPortalEnter={this.startGame}
+          >
+            <ViroPortal position={[0, 0, -1]} scale={[0.1, 0.1, 0.1]}>
+              <Viro3DObject
+                source={require("../../../res/portal_ship/portal_ship.vrx")}
+                resources={[
+                  require("../../../res/portal_ship/portal_ship_diffuse.png"),
+                  require("../../../res/portal_ship/portal_ship_normal.png"),
+                  require("../../../res/portal_ship/portal_ship_specular.png")
+                ]}
+                type="VRX"
+                onLoadStart={() => this.setState({ loading: true })}
+                onLoadEnd={() => this.setState({ loading: false })}
+              />
+            </ViroPortal>
+            {/* <Viro360Image source={require('../../../res/joshua_tree.jpg')} /> */}
+            <Viro360Video source={require("../../../res/360_surf.mp4")} loop={true} />
+            {dollarBills.map((item, index) => (
+              <ViroBox
+                key={index}
+                position={item.position}
+                rotation={item.rotation}
+                onClick={() => this.onDollarSelect(index)}
+                height={0.2}
+                length={0.01}
+                width={0.6}
+                materials={['money']}
+              />
+            ))}
+          </ViroPortalScene>
         }
       </ViroARScene>
     )
@@ -70,21 +134,24 @@ class Webscreen extends Component {
         <ViroARSceneNavigator
           initialScene={{ scene: this.renderARScene }}
         />
+        <Text style={styles.score}>Score: {this.state.score}</Text>
+        <TouchableOpacity
+          onPress={() => this.setState({ score: 0 })}
+          style={styles.restartContainer}
+        >
+          <Text style={styles.restart}>Restart</Text>
+        </TouchableOpacity>
       </View>
     )
   }
 }
 
 ViroMaterials.createMaterials({
-  white: {
-    lightingModel: 'Blinn',
-    diffuseColor: 'rgb(231,231,231)'
-  },
-  moon: {
+  money: {
     shininess: 2.0,
     lightingModel: 'Blinn',
-    diffuseTexture: require('../../res/moon.jpg')
-  }
+    diffuseTexture: require('../../../res/DollarFront.JPG')
+  },
 })
 
 ViroAnimations.registerAnimations({
@@ -93,6 +160,26 @@ ViroAnimations.registerAnimations({
       rotateY: '+=45'
     },
     duration: 2000
+  }
+});
+
+const styles = StyleSheet.create({
+  score: {
+    position: 'absolute',
+    alignSelf: 'center',
+    color: 'white',
+    fontSize: 50,
+    marginTop: 30
+  },
+  restart: {
+    color: 'white',
+    fontSize: 30
+  },
+  restartContainer: {
+    position: 'absolute',
+    bottom: 0,
+    alignSelf: 'center',
+    marginBottom: 30
   }
 });
 
